@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	// Revision ...
+	// Revision git revision eg. 92ad36dec
 	revision string
-	// Version ...
+	// Version tag version, eg. v1.0.0
 	version string
 )
 

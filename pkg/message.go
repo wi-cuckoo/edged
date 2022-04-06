@@ -1,9 +1,9 @@
 package pkg
 
 type Message struct {
-	TopName string
-	data    []byte
-	Retain  bool
+	TopicName string
+	data      []byte
+	Retain    bool
 }
 
 func (m *Message) CopyData() []byte {

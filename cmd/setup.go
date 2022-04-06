@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"github.com/wi-cuckoo/edged"
+	"github.com/wi-cuckoo/edged/internal"
 )
 
 func setup(c *cli.Context) error {
@@ -25,40 +26,29 @@ func setup(c *cli.Context) error {
 	}
 
 	e := &Edged{
-		pub:  pubLn,
-		sub:  subLn,
+		pub:  internal.NewPub(pubLn),
+		sub:  internal.NewSub(subLn),
 		quit: make(chan struct{}),
 	}
-	go e.servePub()
-	go e.serveSub()
+	if err := e.Start(); err != nil {
+		return err
+	}
 	e.WaitClose()
 
 	return nil
 }
 
 type Edged struct {
-	pub, sub net.Listener
-	quit     chan struct{}
+	pub  *internal.Pub
+	sub  *internal.Sub
+	quit chan struct{}
 }
 
-func (e *Edged) servePub() {
-	for {
-		conn, err := e.pub.Accept()
-		if err != nil {
-			return
-		}
-		logrus.Infof("accept conn %s->%s", conn.RemoteAddr(), conn.LocalAddr())
-	}
-}
+func (e *Edged) Start() error {
+	go e.pub.Serve()
+	go e.sub.Serve()
 
-func (e *Edged) serveSub() {
-	for {
-		conn, err := e.pub.Accept()
-		if err != nil {
-			return
-		}
-		logrus.Infof("accept conn %s->%s", conn.RemoteAddr(), conn.LocalAddr())
-	}
+	return nil
 }
 
 // WaitClose listen to sys singal, then do something befor exit really
