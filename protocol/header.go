@@ -8,7 +8,7 @@ const (
 )
 
 // QoSLevel Position: byte 1, bits 2-1
-type QoSLevel int8
+type QoSLevel byte
 
 const (
 	QoSLevel0 = iota // At most once, Fire and Forget
@@ -17,7 +17,7 @@ const (
 )
 
 // MessageType Position: byte 1, bits 7-4
-type MessageType int8
+type MessageType byte
 
 const (
 	Reserved    MessageType = iota
@@ -39,7 +39,8 @@ const (
 
 // Header fixed byte 1
 type Header struct {
-	Qos         QoSLevel
-	MsgType     MessageType
-	Retain, Dup bool
+	MsgType      MessageType
+	Qos          QoSLevel
+	Retain, Dup  bool
+	RemainLength int
 }
