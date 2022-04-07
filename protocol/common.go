@@ -62,3 +62,11 @@ func (d *decoder) readUint16() (uint16, error) {
 	}
 	return binary.BigEndian.Uint16(bs), nil
 }
+
+func (d *decoder) readOneByte() (byte, error) {
+	return d.ReadByte()
+}
+
+type encoder struct {
+	*bufio.Writer
+}
