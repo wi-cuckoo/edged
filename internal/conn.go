@@ -14,6 +14,8 @@ type EdgedConn struct {
 	authrized bool
 	topic     *Topic
 	quit      chan struct{}
+
+	in, out chan protocol.Packet
 }
 
 func (c *EdgedConn) handleConn() {
