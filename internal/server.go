@@ -26,10 +26,10 @@ func Setup(c *cli.Context) error {
 		cfg:  c,
 		quit: make(chan struct{}),
 	}
-	if err := e.Start(); err != nil {
+	if err := e.serve(); err != nil {
 		return err
 	}
-	e.WaitClose()
+	e.waitClose()
 
 	return nil
 }
@@ -40,7 +40,7 @@ type Edged struct {
 	quit chan struct{}
 }
 
-func (e *Edged) Start() error {
+func (e *Edged) serve() error {
 	for {
 		conn, err := e.ln.Accept()
 		if err != nil {
@@ -53,7 +53,7 @@ func (e *Edged) Start() error {
 }
 
 // WaitClose listen to sys singal, then do something befor exit really
-func (e *Edged) WaitClose() {
+func (e *Edged) waitClose() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	<-sig
