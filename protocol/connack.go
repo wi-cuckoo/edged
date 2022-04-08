@@ -28,3 +28,8 @@ func (c *ConnackPacket) Decode(d *decoder) error {
 	c.RetCode = ReturnCode(b)
 	return err
 }
+
+func (c *ConnackPacket) Encode(enc *encoder) error {
+	var err error
+	return err
+}

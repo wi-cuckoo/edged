@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"net"
@@ -10,24 +10,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"github.com/wi-cuckoo/edged"
-	"github.com/wi-cuckoo/edged/internal"
 )
 
-func setup(c *cli.Context) error {
+func Setup(c *cli.Context) error {
 	setLogger(c)
 
-	pubLn, err := net.Listen("tcp", c.String(edged.PubAddrFlag.Name))
+	ln, err := net.Listen("tcp", c.String(edged.TCPAddrFlag.Name))
 	if err != nil {
 		return err
 	}
-	subLn, err := net.Listen("tcp", c.String(edged.SubAddrFlag.Name))
-	if err != nil {
-		return err
-	}
+	logrus.Infof("listen on tcp address %s", ln.Addr().String())
 
 	e := &Edged{
-		pub:  internal.NewPub(pubLn),
-		sub:  internal.NewSub(subLn),
+		ln:   ln,
+		cfg:  c,
 		quit: make(chan struct{}),
 	}
 	if err := e.Start(); err != nil {
@@ -39,16 +35,21 @@ func setup(c *cli.Context) error {
 }
 
 type Edged struct {
-	pub  *internal.Pub
-	sub  *internal.Sub
+	cfg  *cli.Context
+	ln   net.Listener
 	quit chan struct{}
 }
 
 func (e *Edged) Start() error {
-	go e.pub.Serve()
-	go e.sub.Serve()
-
-	return nil
+	for {
+		conn, err := e.ln.Accept()
+		if err != nil {
+			return err
+		}
+		logrus.Infof("accept publisher conn %s->%s", conn.RemoteAddr(), conn.LocalAddr())
+		edgedConn := &EdgedConn{Conn: conn}
+		go edgedConn.handleConn()
+	}
 }
 
 // WaitClose listen to sys singal, then do something befor exit really
@@ -61,8 +62,7 @@ func (e *Edged) WaitClose() {
 	close(e.quit)
 	done := make(chan bool)
 	go func() {
-		e.pub.Close()
-		e.sub.Close()
+		e.ln.Close()
 		done <- true
 	}()
 

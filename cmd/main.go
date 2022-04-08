@@ -6,6 +6,7 @@ import (
 
 	"github.com/urfave/cli"
 	"github.com/wi-cuckoo/edged"
+	"github.com/wi-cuckoo/edged/internal"
 )
 
 var (
@@ -23,11 +24,10 @@ func main() {
 		fmt.Printf("version=%s revision=%s\n", c.App.Version, revision)
 	}
 	app.Usage = "IOT broker with MQTT protocol"
-	app.Action = setup
+	app.Action = internal.Setup
 	app.Flags = []cli.Flag{
 		edged.DebugFlag,
-		edged.PubAddrFlag,
-		edged.SubAddrFlag,
+		edged.TCPAddrFlag,
 	}
 
 	if err := app.Run(os.Args); err != nil {
