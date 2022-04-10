@@ -2,7 +2,9 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"net"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wi-cuckoo/edged/protocol"
@@ -15,30 +17,48 @@ type EdgedConn struct {
 	topic     *Topic
 	quit      chan struct{}
 
+	wg      sync.WaitGroup
 	in, out chan protocol.Packet
 }
 
 func (c *EdgedConn) handleConn() {
-	defer c.Close()
+	defer c.close()
 
+	c.wg.Add(2)
+	go c.processIncoming()
+	go c.processOutgoing()
+	c.wg.Wait()
+
+}
+
+func (c *EdgedConn) close() {
+	close(c.in)
+	close(c.out)
+	c.Close()
+}
+
+func (c *EdgedConn) processIncoming() {
+	defer c.wg.Done()
 	for {
 		packet, err := protocol.ReadPacket(c)
 		if err != nil {
 			logrus.Errorf("read packet err: %s", err.Error())
+			break
+		}
+		c.in <- packet
+	}
+}
+
+func (c *EdgedConn) processOutgoing() {
+	defer c.wg.Done()
+	for {
+		select {
+		case packet := <-c.out:
+			// write packet to client
+			fmt.Println(packet)
+		case <-c.quit:
 			return
 		}
-
-		if !c.authrized {
-			if err := authenticate(packet); err != nil {
-				logrus.Errorf("auth fail err: %s", err.Error())
-				return
-			}
-			c.authrized = true
-			// return ack
-			continue
-		}
-
-		// todo handle publish
 	}
 }
 
