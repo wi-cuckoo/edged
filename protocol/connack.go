@@ -33,3 +33,7 @@ func (c *ConnackPacket) Encode(enc *encoder) error {
 	var err error
 	return err
 }
+
+func (c *ConnackPacket) MessageType() MessageType {
+	return CONNACK
+}

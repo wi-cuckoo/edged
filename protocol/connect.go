@@ -72,3 +72,12 @@ func (c *ConnectPacket) Decode(d *decoder) error {
 
 	return nil
 }
+
+func (c *ConnectPacket) MessageType() MessageType {
+	return CONNECT
+}
+
+// Encode server-side won't send CONNECT packet to client
+func (c *ConnectPacket) Encode(e *encoder) error {
+	return nil
+}

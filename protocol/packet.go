@@ -7,8 +7,9 @@ import (
 )
 
 type Packet interface {
+	MessageType() MessageType
 	Decode(d *decoder) error
-	// Encode(e *encoder) error
+	Encode(e *encoder) error
 }
 
 // ReadPacket ...

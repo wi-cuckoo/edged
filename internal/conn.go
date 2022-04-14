@@ -34,7 +34,6 @@ func (c *EdgedConn) handleConn() {
 func (c *EdgedConn) close() {
 	close(c.in)
 	close(c.out)
-	c.Close()
 }
 
 func (c *EdgedConn) processIncoming() {
@@ -45,12 +44,27 @@ func (c *EdgedConn) processIncoming() {
 			logrus.Errorf("read packet err: %s", err.Error())
 			break
 		}
-		c.in <- packet
+		switch packet.MessageType() {
+		case protocol.CONNECT:
+			// return CONNACK package
+		case protocol.DISCONNECT:
+			return
+		case protocol.PINGREQ:
+			// return PINGRESP packet
+		case protocol.PUBLISH:
+			// return PUBACK packet
+		case protocol.SUBSCRIBE:
+			// return SUBACK packet
+		case protocol.UNSUBSCRIBE:
+			// return UNSUBACK packet
+		}
 	}
 }
 
 func (c *EdgedConn) processOutgoing() {
 	defer c.wg.Done()
+	defer c.Close()
+
 	for {
 		select {
 		case packet := <-c.out:
