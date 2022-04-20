@@ -16,8 +16,16 @@ const (
 	QoSLevel2        // Exactly once, Assured delivery
 )
 
+func (q QoSLevel) Byte() byte {
+	return byte(q)
+}
+
 // MessageType Position: byte 1, bits 7-4
 type MessageType byte
+
+func (m MessageType) Byte() byte {
+	return byte(m)
+}
 
 const (
 	Reserved    MessageType = iota

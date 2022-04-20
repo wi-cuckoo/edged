@@ -70,3 +70,38 @@ func (d *decoder) readOneByte() (byte, error) {
 type encoder struct {
 	*bufio.Writer
 }
+
+func (e *encoder) writeHeader(h *Header) error {
+	b := h.MsgType.Byte()<<4 |
+		boolToByte(h.Dup)<<3 |
+		h.Qos.Byte()<<1 |
+		boolToByte(h.Retain)<<1
+	if err := e.WriteByte(b); err != nil {
+		return err
+	}
+	return e.writeRemainLength(h.RemainLength)
+}
+
+func (e *encoder) writeRemainLength(n int) error {
+	for {
+		b := n % 128
+		n /= 128
+		if n > 0 {
+			b |= 0x80
+		}
+		if err := e.WriteByte(byte(b)); err != nil {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+	}
+	return nil
+}
+
+func boolToByte(b bool) byte {
+	if b {
+		return 1
+	}
+	return 0
+}

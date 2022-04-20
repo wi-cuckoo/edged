@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"net"
 	"sync"
 
@@ -58,6 +57,7 @@ func (c *EdgedConn) processIncoming() {
 		switch packet.MessageType() {
 		case protocol.CONNECT:
 			// return CONNACK package
+			c.out <- c.handleConnect(packet)
 		case protocol.DISCONNECT:
 			return
 		case protocol.PINGREQ:
@@ -80,7 +80,10 @@ func (c *EdgedConn) processOutgoing() {
 		select {
 		case packet := <-c.out:
 			// write packet to client
-			fmt.Println(packet)
+			if err := protocol.WritePacket(c, packet); err != nil {
+				logrus.Errorf("write packet fail: %s", err.Error())
+				return
+			}
 		case <-c.quit:
 			return
 		}
@@ -94,8 +97,12 @@ func (c *EdgedConn) handleConnect(p protocol.Packet) *protocol.ConnackPacket {
 		return nil
 	}
 	c.topic = c.ps.createTopic(string(cp.WillTopic))
-
 	c.authrized = true // todo check passws&username
 
-	return nil
+	ca := &protocol.ConnackPacket{
+		Header:  cp.Header,
+		RetCode: protocol.Accepted,
+	}
+
+	return ca
 }

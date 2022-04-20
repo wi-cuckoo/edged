@@ -2,6 +2,10 @@ package protocol
 
 type ReturnCode byte
 
+func (r ReturnCode) Byte() byte {
+	return byte(r)
+}
+
 const (
 	Accepted ReturnCode = iota
 	UnacceptableProtocolVerion
@@ -30,7 +34,10 @@ func (c *ConnackPacket) Decode(d *decoder) error {
 }
 
 func (c *ConnackPacket) Encode(enc *encoder) error {
-	var err error
+	if err := enc.writeHeader(c.Header); err != nil {
+		return err
+	}
+	_, err := enc.Write([]byte{c.Reserved, c.RetCode.Byte()})
 	return err
 }
 

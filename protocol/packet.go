@@ -28,6 +28,11 @@ func ReadPacket(r io.Reader) (Packet, error) {
 	return packet, err
 }
 
+func WritePacket(w io.Writer, p Packet) error {
+	enc := &encoder{bufio.NewWriter(w)}
+	return p.Encode(enc)
+}
+
 func selectPacket(h *Header) (Packet, error) {
 	switch h.MsgType {
 	case CONNECT:
