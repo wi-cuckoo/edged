@@ -22,8 +22,11 @@ func Setup(c *cli.Context) error {
 	logrus.Infof("listen on tcp address %s", ln.Addr().String())
 
 	e := &Edged{
-		ln:   ln,
-		cfg:  c,
+		ln:  ln,
+		cfg: c,
+		ps: &pubsub{
+			topics: make(map[string]*topic),
+		},
 		quit: make(chan struct{}),
 	}
 	if err := e.serve(); err != nil {
@@ -37,6 +40,7 @@ func Setup(c *cli.Context) error {
 type Edged struct {
 	cfg  *cli.Context
 	ln   net.Listener
+	ps   *pubsub
 	quit chan struct{}
 }
 
@@ -47,7 +51,7 @@ func (e *Edged) serve() error {
 			return err
 		}
 		logrus.Infof("accept publisher conn %s->%s", conn.RemoteAddr(), conn.LocalAddr())
-		edgedConn := &EdgedConn{Conn: conn}
+		edgedConn := NewEdgeConn(conn, e.ps)
 		go edgedConn.handleConn()
 	}
 }

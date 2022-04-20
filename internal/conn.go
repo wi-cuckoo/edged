@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -14,11 +13,23 @@ type EdgedConn struct {
 	net.Conn
 
 	authrized bool
-	topic     *Topic
+	ps        *pubsub
+	topic     *topic
 	quit      chan struct{}
 
 	wg      sync.WaitGroup
 	in, out chan protocol.Packet
+}
+
+func NewEdgeConn(conn net.Conn, ps *pubsub) *EdgedConn {
+	return &EdgedConn{
+		Conn:      conn,
+		ps:        ps,
+		authrized: false,
+		quit:      make(chan struct{}),
+		in:        make(chan protocol.Packet, 16),
+		out:       make(chan protocol.Packet, 16),
+	}
 }
 
 func (c *EdgedConn) handleConn() {
@@ -76,12 +87,15 @@ func (c *EdgedConn) processOutgoing() {
 	}
 }
 
-func authenticate(p protocol.Packet) error {
-	_, ok := p.(*protocol.ConnectPacket)
-	if !ok {
-		return errors.New("not CONNECT packet")
+func (c *EdgedConn) handleConnect(p protocol.Packet) *protocol.ConnackPacket {
+	cp := p.(*protocol.ConnectPacket)
+
+	if len(cp.WillTopic) == 0 {
+		return nil
 	}
-	// todo check username & password
+	c.topic = c.ps.createTopic(string(cp.WillTopic))
+
+	c.authrized = true // todo check passws&username
 
 	return nil
 }
