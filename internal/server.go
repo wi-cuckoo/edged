@@ -50,7 +50,7 @@ func (e *Edged) serve() error {
 		if err != nil {
 			return err
 		}
-		logrus.Infof("accept publisher conn %s->%s", conn.RemoteAddr(), conn.LocalAddr())
+		logrus.Infof("accept connection <%s,%s>", conn.RemoteAddr(), conn.LocalAddr())
 		edgedConn := NewEdgeConn(conn, e.ps)
 		go edgedConn.handleConn()
 	}
@@ -81,7 +81,9 @@ func (e *Edged) waitClose() {
 }
 
 func setLogger(c *cli.Context) {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		DisableHTMLEscape: true,
+	})
 	logrus.SetLevel(logrus.InfoLevel)
 	if c.Bool(edged.DebugFlag.Name) {
 		logrus.SetLevel(logrus.DebugLevel)

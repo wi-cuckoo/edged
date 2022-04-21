@@ -30,7 +30,10 @@ func ReadPacket(r io.Reader) (Packet, error) {
 
 func WritePacket(w io.Writer, p Packet) error {
 	enc := &encoder{bufio.NewWriter(w)}
-	return p.Encode(enc)
+	if err := p.Encode(enc); err != nil {
+		return err
+	}
+	return enc.Flush()
 }
 
 func selectPacket(h *Header) (Packet, error) {

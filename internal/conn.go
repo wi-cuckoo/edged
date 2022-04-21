@@ -39,6 +39,7 @@ func (c *EdgedConn) handleConn() {
 	go c.processOutgoing()
 	c.wg.Wait()
 
+	logrus.Infof("close connection <%s,%s>", c.RemoteAddr(), c.LocalAddr())
 }
 
 func (c *EdgedConn) close() {
@@ -48,6 +49,8 @@ func (c *EdgedConn) close() {
 
 func (c *EdgedConn) processIncoming() {
 	defer c.wg.Done()
+	defer close(c.quit)
+
 	for {
 		packet, err := protocol.ReadPacket(c)
 		if err != nil {
@@ -93,14 +96,20 @@ func (c *EdgedConn) processOutgoing() {
 func (c *EdgedConn) handleConnect(p protocol.Packet) *protocol.ConnackPacket {
 	cp := p.(*protocol.ConnectPacket)
 
+	header := &protocol.Header{
+		MsgType: protocol.CONNACK,
+	}
 	if len(cp.WillTopic) == 0 {
-		return nil
+		return &protocol.ConnackPacket{
+			Header:  header,
+			RetCode: protocol.IentifierRejected,
+		}
 	}
 	c.topic = c.ps.createTopic(string(cp.WillTopic))
 	c.authrized = true // todo check passws&username
 
 	ca := &protocol.ConnackPacket{
-		Header:  cp.Header,
+		Header:  header,
 		RetCode: protocol.Accepted,
 	}
 

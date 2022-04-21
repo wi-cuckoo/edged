@@ -34,6 +34,7 @@ func (c *ConnackPacket) Decode(d *decoder) error {
 }
 
 func (c *ConnackPacket) Encode(enc *encoder) error {
+	c.Header.RemainLength = 2
 	if err := enc.writeHeader(c.Header); err != nil {
 		return err
 	}
