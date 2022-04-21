@@ -36,7 +36,7 @@ func (d *decoder) readRemainLength() (int, error) {
 		multi *= 128
 
 		// 最高位即 continuation bit 为0，表明是最后一字节
-		if (b & 0xff) == 0 {
+		if (b & 0x80) == 0 {
 			break
 		}
 	}
