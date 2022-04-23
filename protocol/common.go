@@ -99,6 +99,17 @@ func (e *encoder) writeRemainLength(n int) error {
 	return nil
 }
 
+func (e *encoder) writeUint16(n uint16) error {
+	bs := make([]byte, 2)
+	binary.BigEndian.PutUint16(bs, n)
+	_, err := e.Write(bs)
+	return err
+}
+
+func (e *encoder) writeOneByte(b byte) error {
+	return e.WriteByte(b)
+}
+
 func boolToByte(b bool) byte {
 	if b {
 		return 1
